@@ -1,13 +1,9 @@
 """Configuration management for the RAG Chatbot application."""
-import os
+import streamlit as st
 from pathlib import Path
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 # OpenAI Configuration
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()  # Strip whitespace/newlines
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", "").strip()  # Strip whitespace/newlines
 OPENAI_MODEL = "o3-mini"  # Reasoning model for final analysis
 AGENT_MODEL = "gpt-4o-mini"  # Agent model for tool calling and orchestration
 EMBEDDING_MODEL = "text-embedding-3-small"
@@ -23,18 +19,18 @@ RPC_TIMEOUT_SECONDS = 30  # Timeout for Supabase RPC calls
 PROGRESSIVE_K_VALUES = [5, 10, 15, 20]  # Progressive k values to try on timeout
 
 # Supabase Configuration
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = st.secrets.get("SUPABASE_URL")
+SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
 
 # Airtable Configuration
-AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
+AIRTABLE_API_KEY = st.secrets.get("AIRTABLE_API_KEY")
 AIRTABLE_BASE_ID = "appF19Ns3tXbwO9gA"
 AIRTABLE_TABLE_ID = "tblM5frQWEQk5sbbn"
 AIRTABLE_COMPANY_FIELD_ID = "fldIqx9Er0YbIcGwa"
 AIRTABLE_VIEW_ID = "viwLtd3NINE6Xq3Pf"
 
 # Authentication Configuration
-APP_PASSWORD = os.getenv("APP_PASSWORD", "")  # Simple password for app access
+APP_PASSWORD = st.secrets.get("APP_PASSWORD", "")  # Simple password for app access
 
 # Database Configuration
 DB_PATH = Path(__file__).parent / "conversations.db"
@@ -44,9 +40,9 @@ TABLE_NAME = "accounts_documents"
 QUERY_NAME = "match_accounts_documents"
 DEFAULT_K = 10  # Default number of documents to retrieve
 
-# Validate required environment variables
+# Validate required secrets
 def validate_config():
-    """Validate that all required environment variables are set."""
+    """Validate that all required secrets are set."""
     missing = []
     
     if not OPENAI_API_KEY:
@@ -62,8 +58,8 @@ def validate_config():
     
     if missing:
         raise ValueError(
-            f"Missing required environment variables: {', '.join(missing)}\n"
-            "Please create a .env file with these variables."
+            f"Missing required secrets: {', '.join(missing)}\n"
+            "Please configure these in .streamlit/secrets.toml file."
         )
     
     return True
