@@ -33,6 +33,9 @@ AIRTABLE_TABLE_ID = "tblM5frQWEQk5sbbn"
 AIRTABLE_COMPANY_FIELD_ID = "fldIqx9Er0YbIcGwa"
 AIRTABLE_VIEW_ID = "viwLtd3NINE6Xq3Pf"
 
+# Authentication Configuration
+APP_PASSWORD = os.getenv("APP_PASSWORD", "")  # Simple password for app access
+
 # Database Configuration
 DB_PATH = Path(__file__).parent / "conversations.db"
 
@@ -54,6 +57,8 @@ def validate_config():
         missing.append("SUPABASE_KEY")
     if not AIRTABLE_API_KEY:
         missing.append("AIRTABLE_API_KEY")
+    if not APP_PASSWORD:
+        missing.append("APP_PASSWORD")
     
     if missing:
         raise ValueError(

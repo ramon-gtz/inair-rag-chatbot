@@ -10,7 +10,7 @@ import sys
 import io
 from contextlib import redirect_stdout, redirect_stderr
 
-from config import validate_config
+from config import validate_config, APP_PASSWORD
 from database import (
     init_db, create_conversation, add_message, get_conversation_history,
     get_recent_conversations, get_conversation, update_conversation_title,
@@ -154,6 +154,9 @@ def update_agent_filters():
 
 def initialize_session_state():
     """Initialize session state variables."""
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
     
@@ -227,6 +230,44 @@ def generate_conversation_title(first_message: str) -> str:
     return title
 
 
+def show_login_form():
+    """Display login form and handle authentication."""
+    st.markdown("""
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem;
+            margin-top: 5rem;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="login-header">', unsafe_allow_html=True)
+    st.title("🔐 InAir RAG Chatbot")
+    st.markdown("Please enter the password to access the chatbot")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    with st.form("login_form"):
+        password = st.text_input("Password", type="password", placeholder="Enter password")
+        submit_button = st.form_submit_button("Login", use_container_width=True)
+        
+        if submit_button:
+            if password == APP_PASSWORD:
+                st.session_state.authenticated = True
+                st.success("✓ Login successful!")
+                st.rerun()
+            else:
+                st.error("❌ Incorrect password. Please try again.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
 def display_message(message: Dict, index: int):
     """Display a chat message with proper styling."""
     role = message['role']
@@ -265,6 +306,16 @@ def render_sidebar():
     """Render the sidebar with settings and conversation history."""
     with st.sidebar:
         st.title("💬 InAir Chatbot")
+        
+        # Logout button at the top
+        if st.button("🚪 Logout", use_container_width=True, type="secondary"):
+            st.session_state.authenticated = False
+            st.session_state.messages = []
+            if st.session_state.agent:
+                st.session_state.agent.clear_memory()
+            st.rerun()
+        
+        st.divider()
         
         # Settings section
         with st.expander("⚙️ Search Filters", expanded=False):
@@ -437,6 +488,11 @@ def render_sidebar():
 def main():
     """Main application function."""
     initialize_session_state()
+    
+    # Check authentication first
+    if not st.session_state.authenticated:
+        show_login_form()
+        return
     
     # Initialize database
     init_db()
