@@ -26,6 +26,13 @@ PROGRESSIVE_K_VALUES = [5, 10, 15, 20]  # Progressive k values to try on timeout
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
+# Airtable Configuration
+AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
+AIRTABLE_BASE_ID = "appF19Ns3tXbwO9gA"
+AIRTABLE_TABLE_ID = "tblM5frQWEQk5sbbn"
+AIRTABLE_COMPANY_FIELD_ID = "fldIqx9Er0YbIcGwa"
+AIRTABLE_VIEW_ID = "viwLtd3NINE6Xq3Pf"
+
 # Database Configuration
 DB_PATH = Path(__file__).parent / "conversations.db"
 
@@ -45,6 +52,8 @@ def validate_config():
         missing.append("SUPABASE_URL")
     if not SUPABASE_KEY:
         missing.append("SUPABASE_KEY")
+    if not AIRTABLE_API_KEY:
+        missing.append("AIRTABLE_API_KEY")
     
     if missing:
         raise ValueError(

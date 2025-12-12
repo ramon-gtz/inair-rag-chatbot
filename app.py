@@ -111,7 +111,7 @@ st.markdown("""
     /* Hide Streamlit default elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* header {visibility: hidden;} */
     
     /* Loading spinner */
     .stSpinner > div {
@@ -270,10 +270,10 @@ def render_sidebar():
         with st.expander("⚙️ Search Filters", expanded=False):
             st.markdown("**Optional Filters** (Leave empty to search all documents)")
             
-            # Fetch available options from Supabase
+            # Fetch available options from Airtable and Supabase
             try:
-                available_accounts = get_available_accounts()
-                available_doc_types = get_available_document_types()
+                available_accounts = get_available_accounts()  # Returns List[Tuple[id, name]]
+                available_doc_types = get_available_document_types()  # Returns Dict[display_name, actual_value]
                 stats = get_document_stats()
                 
                 # Show stats
@@ -282,30 +282,59 @@ def render_sidebar():
             except Exception as e:
                 st.warning(f"Could not load options: {str(e)}")
                 available_accounts = []
-                available_doc_types = []
+                available_doc_types = {}
             
             # Account IDs filter - multiselect
             if available_accounts:
-                selected_accounts = st.multiselect(
+                # Create mapping of company names to IDs
+                account_id_to_name = {acc_id: acc_name for acc_id, acc_name in available_accounts}
+                account_name_to_id = {acc_name: acc_id for acc_id, acc_name in available_accounts}
+                
+                # Get currently selected account names for default
+                current_account_names = [
+                    account_id_to_name.get(acc_id, acc_id) 
+                    for acc_id in st.session_state.filters.get('account_ids', [])
+                    if acc_id in account_id_to_name
+                ]
+                
+                # Display multiselect with company names
+                selected_account_names = st.multiselect(
                     "Filter by Accounts",
-                    options=available_accounts,
-                    default=st.session_state.filters['account_ids'] if st.session_state.filters['account_ids'] else [],
+                    options=[name for _, name in available_accounts],
+                    default=current_account_names,
                     help="Select specific client accounts to search within"
                 )
-                st.session_state.filters['account_ids'] = selected_accounts
+                
+                # Convert selected names back to IDs for storage
+                st.session_state.filters['account_ids'] = [
+                    account_name_to_id[name] for name in selected_account_names
+                ]
             else:
                 st.info("No accounts available")
                 st.session_state.filters['account_ids'] = []
             
             # Document types filter - multiselect
             if available_doc_types:
-                selected_doc_types = st.multiselect(
+                # Get currently selected display names for default
+                value_to_display = {v: k for k, v in available_doc_types.items()}
+                current_display_names = [
+                    value_to_display.get(doc_type, doc_type)
+                    for doc_type in st.session_state.filters.get('document_types', [])
+                    if doc_type in value_to_display
+                ]
+                
+                # Display multiselect with friendly names
+                selected_display_names = st.multiselect(
                     "Filter by Document Types",
-                    options=available_doc_types,
-                    default=st.session_state.filters['document_types'] if st.session_state.filters['document_types'] else [],
+                    options=list(available_doc_types.keys()),
+                    default=current_display_names,
                     help="Select specific document types (meetings, emails, etc.)"
                 )
-                st.session_state.filters['document_types'] = selected_doc_types
+                
+                # Convert display names to actual values for storage
+                st.session_state.filters['document_types'] = [
+                    available_doc_types[display_name] for display_name in selected_display_names
+                ]
             else:
                 st.info("No document types available")
                 st.session_state.filters['document_types'] = []
